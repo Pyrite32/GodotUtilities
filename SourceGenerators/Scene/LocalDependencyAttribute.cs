@@ -1,11 +1,11 @@
 ﻿namespace GodotUtilities
 {
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public sealed class LocalToSceneAttribute : Attribute
+    public sealed class DiTargetAttribute : Attribute
     {
         public string NodePath { get; }
 
-        public LocalToSceneAttribute(string nodePath = null)
+        public DiTargetAttribute(string nodePath = null)
         {
             NodePath = nodePath;
         }

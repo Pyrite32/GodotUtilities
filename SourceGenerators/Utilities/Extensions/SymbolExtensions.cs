@@ -21,34 +21,39 @@ namespace GodotUtilities.SourceGenerators
         public static string ClassDef(this INamedTypeSymbol symbol)
             => symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
-        public static string GeneratePartialClass(this INamedTypeSymbol symbol, IEnumerable<string> content, IEnumerable<string> usings = null)
-        {
-            var (nsOpen, nsClose, nsIndent) = symbol.GetNamespaceDeclaration();
-
-            return $@"
-{(usings is null ? "" : string.Join("\n", usings))}
-
-{nsOpen?.Trim()}
-{nsIndent}partial class {symbol.ClassDef()}
-{nsIndent}{{
-{nsIndent}    {string.Join($"\n{nsIndent}    ", content)}
-{nsIndent}}}
-{nsClose?.Trim()}
-".TrimStart();
-        }
-
         public static bool InheritsFrom(this ITypeSymbol symbol, string type)
         {
             var baseType = symbol.BaseType;
+            if (baseType.ToString().Equals(type))
+            {
+                return true;
+            }
             while (baseType != null)
             {
-                if (baseType.Name == type)
+                if (baseType.ToString().Equals(type))
+                {
                     return true;
+                }
 
                 baseType = baseType.BaseType;
             }
 
             return false;
         }
+
+
+        public static bool AssignableFrom(this ITypeSymbol symbol, string type)
+        {
+            var result = symbol.ToString().Equals(type);
+            if (result)
+            {
+                return true;
+            }
+            else
+            {
+                return symbol.InheritsFrom(type);
+            }
+        }
+
     }
 }

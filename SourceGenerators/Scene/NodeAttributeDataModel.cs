@@ -1,66 +1,130 @@
-﻿using Microsoft.CodeAnalysis;
-using GodotUtilities.CaseExtensions;
+﻿using System.Runtime;
+using Microsoft.CodeAnalysis;
 
 namespace GodotUtilities.SourceGenerators.Scene
 {
-    internal class LocalDependencyAttributeDataModel : MemberDataModel
+    internal class DiTargetAttributeDataModel : MemberDataModel
     {
-        public string Path { get; }
-        public string PascalName { get; }
-        public string SnakeName { get; }
-        public string LowerName { get; }
         public string MemberName { get; }
-        public string CamelName { get; }
+        public string Path { get; }
         public string Type { get; }
-        public string InnerType { get; }
+        public string InnerType { get; set; }
         public bool InnerIsNode { get; }
+        public bool IsOptionNode { get; }
+        public bool IsNode { get; }
+        public bool IsScanner { get; }
+        internal ISymbol isymbol;
 
-        protected LocalDependencyAttributeDataModel(ISymbol typeSymbol, string nodePath) : base(typeSymbol)
+
+        protected DiTargetAttributeDataModel(ISymbol _typeSymbol, string nodePath) : base(_typeSymbol)
         {
+            isymbol = _typeSymbol;
             Path = nodePath;
             // I prefix variables with m and My.
             // for instance: mNode, mThis for fields
             // and:          MyNode, MyThis for properties
-            MemberName = typeSymbol.Name.FromMyCase().FromMCase();
-            PascalName = MemberName.ToPascalCase();
-            SnakeName = MemberName.ToSnakeCase();
-            LowerName = MemberName.ToLowerInvariant();
-            CamelName = MemberName.ToCamelCase();
 
-            if (typeSymbol is IFieldSymbol fs)
+            MemberName = _typeSymbol.Name;
+
+            if (_typeSymbol is IFieldSymbol fs)
             {
-                InnerType = GetInnerType(fs.Type, out var nts);
-                if (nts != null 
+                Type = fs.Type.ToString();
+
+                var genericPart = "";
+                if (Type.Contains('<'))
+                {
+                    genericPart = Type.Substring(Type.IndexOf('<'));
+                }
+
+
+                SetInnerType(fs.Type, out var nts);
+                if (nts != null
                     && nts.TypeArguments.Length > 0
-                    && nts.TypeArguments[0].InheritsFrom("Godot.Node"))
+                    && nts.TypeArguments[0].AssignableFrom("Godot.Node"))
                 {
                     InnerIsNode = true;
                 }
+
+                if (fs.Type.AssignableFrom("Godot.Node"))
+                {
+                    IsNode = true;
+                }
+                else if (fs.Type.AssignableFrom("GodotStrict.Types.OptionNode" + genericPart))
+                {
+                    IsOptionNode = true;
+                }
+                else if (fs.Type.AssignableFrom("GodotStrict.Types.Scanner" + genericPart))
+                {
+                    IsScanner = true;
+                }
             }
-            else if (typeSymbol is IPropertySymbol ps)
+            else if (_typeSymbol is IPropertySymbol ps)
             {
-                InnerType = GetInnerType(ps.Type, out var nts);
-                if (nts != null 
+                Type = ps.Type.ToString();
+                var genericPart = "";
+                if (Type.Contains('<'))
+                {
+                    genericPart = Type.Substring(Type.IndexOf('<'));
+                }
+
+                SetInnerType(ps.Type, out var nts);
+                if (nts != null
                     && nts.TypeArguments.Length > 0
-                    && nts.TypeArguments[0].InheritsFrom("Godot.Node"))
+                    && nts.TypeArguments[0].AssignableFrom("Godot.Node"))
                 {
                     InnerIsNode = true;
+                }
+
+
+                if (ps.Type.AssignableFrom("Godot.Node"))
+                {
+                    IsNode = true;
+                }
+                else if (ps.Type.AssignableFrom("GodotStrict.Types.OptionNode" + genericPart))
+                {
+                    IsOptionNode = true;
+                }
+                else if (ps.Type.AssignableFrom("GodotStrict.Types.Scanner" + genericPart))
+                {
+                    IsScanner = true;
                 }
             }
         }
 
-        public LocalDependencyAttributeDataModel(IPropertySymbol property, string nodePath) : this(property as ISymbol, nodePath)
+        public string InheritanceChain()
         {
-            Type = property.Type.ToString();
-            
+            string result = "";
+            if (isymbol is IFieldSymbol fs)
+            {
+                var baseType = fs.Type.BaseType;
+                while (baseType != null)
+                {
+                    result += ", " + baseType.Name;
+                    baseType = baseType.BaseType;
+                }
+            }
+            if (isymbol is IPropertySymbol ps)
+            {
+                var baseType = ps.Type.BaseType;
+                while (baseType != null)
+                {
+                    result += ", " + baseType.Name;
+                    baseType = baseType.BaseType;
+                }
+            }
+            return result;
         }
 
-        public LocalDependencyAttributeDataModel(IFieldSymbol field, string nodePath) : this(field as ISymbol, nodePath)
+
+        public DiTargetAttributeDataModel(IPropertySymbol property, string nodePath) : this(property as ISymbol, nodePath)
         {
-            Type = field.Type.ToString();
         }
 
-        private string GetInnerType(ITypeSymbol typeSymbol, out INamedTypeSymbol _nts)
+        public DiTargetAttributeDataModel(IFieldSymbol field, string nodePath) : this(field as ISymbol, nodePath)
+        {
+        }
+
+        private void SetInnerType(ITypeSymbol typeSymbol, out INamedTypeSymbol _nts)
         {
             _nts = null;
             if (typeSymbol is INamedTypeSymbol nts)
@@ -69,10 +133,10 @@ namespace GodotUtilities.SourceGenerators.Scene
                 if (nts.IsGenericType && nts.TypeArguments.Length > 0)
                 {
                     _nts = nts;
-                    return nts.TypeArguments[0].ToString();
+                    InnerType = nts.TypeArguments[0].ToString();
+                    return;
                 }
             }
-            return "";
         }
     }
 }

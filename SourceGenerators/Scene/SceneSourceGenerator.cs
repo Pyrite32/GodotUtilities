@@ -11,30 +11,38 @@ namespace GodotUtilities.SourceGenerators.Scene
 
         protected override (string GeneratedCode, DiagnosticDetail Error) GenerateCode(Compilation compilation, SyntaxNode node, INamedTypeSymbol symbol, AttributeData attribute)
         {
-            List<LocalDependencyAttributeDataModel> localModels = new();
+            List<DiTargetAttributeDataModel> localModels = new();
 
             foreach (var memberAttribute in GetAllNodeAttributes(symbol))
             {
                 switch (memberAttribute.Item1)
                 {
                     case IPropertySymbol property:
-                        localModels.Add(new LocalDependencyAttributeDataModel(property, memberAttribute.Item2.NodePath));
+                        localModels.Add(new DiTargetAttributeDataModel(property, memberAttribute.Item2.NodePath));
                         break;
                     case IFieldSymbol field:
-                        localModels.Add(new LocalDependencyAttributeDataModel(field, memberAttribute.Item2.NodePath));
+                        localModels.Add(new DiTargetAttributeDataModel(field, memberAttribute.Item2.NodePath));
                         break;
                 }
             }
 
             var model = new SceneDataModel(symbol) { LocalNodes = localModels };
             var output = SceneTreeTemplate.Render(model, member => member.Name);
-
+#if DEBUG
+            var fileOutput = output;
+            foreach (var m in localModels)
+            {
+                fileOutput += "\n" + $"type: {m.Type} | inner type: {m.InnerType} | inner type is node: {m.InnerIsNode} | is node: {m.IsNode} | is option: {m.IsOptionNode} | is scanner: {m.IsScanner}";
+                fileOutput += "\n\t i-chain: " + m.InheritanceChain();
+            }
+            File.WriteAllText("C:\\Users\\patri\\Programming\\output-template.csx", fileOutput);
+#endif
             return (output, null);
         }
 
-        private List<(ISymbol, LocalToSceneAttribute)> GetAllNodeAttributes(INamedTypeSymbol symbol, bool excludePrivate = false)
+        private List<(ISymbol, DiTargetAttribute)> GetAllNodeAttributes(INamedTypeSymbol symbol, bool excludePrivate = false)
         {
-            var result = new List<(ISymbol, LocalToSceneAttribute)>();
+            var result = new List<(ISymbol, DiTargetAttribute)>();
 
             if (symbol.BaseType != null)
             {
@@ -43,9 +51,9 @@ namespace GodotUtilities.SourceGenerators.Scene
 
             var members = symbol.GetMembers()
                 .Where(x => !excludePrivate || x.DeclaredAccessibility != Accessibility.Private)
-                .Select(member => (member, member.GetAttributes().FirstOrDefault(x => x?.AttributeClass?.Name == nameof(GodotUtilities.LocalToSceneAttribute))))
+                .Select(member => (member, member.GetAttributes().FirstOrDefault(x => x?.AttributeClass?.Name == nameof(GodotUtilities.DiTargetAttribute))))
                 .Where(x => x.Item2 != null)
-                .Select(x => (x.member, new GodotUtilities.LocalToSceneAttribute((string)x.Item2.ConstructorArguments[0].Value)));
+                .Select(x => (x.member, new GodotUtilities.DiTargetAttribute((string)x.Item2.ConstructorArguments[0].Value)));
 
             result.AddRange(members);
             return result;
