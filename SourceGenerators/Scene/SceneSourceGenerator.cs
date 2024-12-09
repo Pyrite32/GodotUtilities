@@ -11,30 +11,30 @@ namespace GodotUtilities.SourceGenerators.Scene
 
         protected override (string GeneratedCode, DiagnosticDetail Error) GenerateCode(Compilation compilation, SyntaxNode node, INamedTypeSymbol symbol, AttributeData attribute)
         {
-            List<NodeAttributeDataModel> models = new();
+            List<LocalDependencyAttributeDataModel> localModels = new();
 
             foreach (var memberAttribute in GetAllNodeAttributes(symbol))
             {
                 switch (memberAttribute.Item1)
                 {
                     case IPropertySymbol property:
-                        models.Add(new NodeAttributeDataModel(property, memberAttribute.Item2.NodePath));
+                        localModels.Add(new LocalDependencyAttributeDataModel(property, memberAttribute.Item2.NodePath));
                         break;
                     case IFieldSymbol field:
-                        models.Add(new NodeAttributeDataModel(field, memberAttribute.Item2.NodePath));
+                        localModels.Add(new LocalDependencyAttributeDataModel(field, memberAttribute.Item2.NodePath));
                         break;
                 }
             }
 
-            var model = new SceneDataModel(symbol) { Nodes = models };
+            var model = new SceneDataModel(symbol) { LocalNodes = localModels };
             var output = SceneTreeTemplate.Render(model, member => member.Name);
 
             return (output, null);
         }
 
-        private List<(ISymbol, NodeAttribute)> GetAllNodeAttributes(INamedTypeSymbol symbol, bool excludePrivate = false)
+        private List<(ISymbol, LocalToSceneAttribute)> GetAllNodeAttributes(INamedTypeSymbol symbol, bool excludePrivate = false)
         {
-            var result = new List<(ISymbol, NodeAttribute)>();
+            var result = new List<(ISymbol, LocalToSceneAttribute)>();
 
             if (symbol.BaseType != null)
             {
@@ -43,9 +43,9 @@ namespace GodotUtilities.SourceGenerators.Scene
 
             var members = symbol.GetMembers()
                 .Where(x => !excludePrivate || x.DeclaredAccessibility != Accessibility.Private)
-                .Select(member => (member, member.GetAttributes().FirstOrDefault(x => x?.AttributeClass?.Name == nameof(GodotUtilities.NodeAttribute))))
+                .Select(member => (member, member.GetAttributes().FirstOrDefault(x => x?.AttributeClass?.Name == nameof(GodotUtilities.LocalToSceneAttribute))))
                 .Where(x => x.Item2 != null)
-                .Select(x => (x.Item1, new GodotUtilities.NodeAttribute((string)x.Item2.ConstructorArguments[0].Value)));
+                .Select(x => (x.member, new GodotUtilities.LocalToSceneAttribute((string)x.Item2.ConstructorArguments[0].Value)));
 
             result.AddRange(members);
             return result;

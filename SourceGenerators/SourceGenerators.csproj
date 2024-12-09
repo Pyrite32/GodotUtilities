@@ -4,7 +4,7 @@
   <PropertyGroup>
     <LangVersion>preview</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>Firebelley.GodotUtilities.SourceGenerators</AssemblyName>
     <RootNamespace>GodotUtilities.SourceGenerators</RootNamespace>
   </PropertyGroup>
@@ -45,6 +45,9 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.5.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" PrivateAssets="all" />
     <PackageReference Include="Scriban" Version="5.7.0" IncludeAssets="build" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\godot-strict\GodotStrict.csproj" />
   </ItemGroup>
 
 </Project>
