@@ -1,9 +1,9 @@
 ﻿namespace GodotUtilities
 {
     [AttributeUsage(AttributeTargets.Class)]
-    public sealed class SceneAttribute : Attribute
+    public sealed class UseDiAttribute : Attribute
     {
-        public SceneAttribute()
+        public UseDiAttribute()
         {
         }
     }
