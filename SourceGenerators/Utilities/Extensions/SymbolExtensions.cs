@@ -24,6 +24,11 @@ namespace GodotUtilities.SourceGenerators
         public static bool InheritsFrom(this ITypeSymbol symbol, string type)
         {
             var baseType = symbol.BaseType;
+            if (baseType == null)
+            {
+                //TODO: for interfaces, return false always.
+                return false;
+            }
             if (baseType.ToString().Equals(type))
             {
                 return true;

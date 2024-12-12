@@ -1,4 +1,5 @@
-﻿using System.Runtime;
+﻿using System.Diagnostics;
+using System.Runtime;
 using Microsoft.CodeAnalysis;
 
 namespace GodotUtilities.SourceGenerators.Scene
@@ -18,101 +19,162 @@ namespace GodotUtilities.SourceGenerators.Scene
 
         protected DiTargetAttributeDataModel(ISymbol _typeSymbol, string nodePath) : base(_typeSymbol)
         {
+            // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nenter");
             isymbol = _typeSymbol;
             Path = nodePath;
             // I prefix variables with m and My.
             // for instance: mNode, mThis for fields
             // and:          MyNode, MyThis for properties
 
-            MemberName = _typeSymbol.Name;
+            MemberName = _typeSymbol?.Name ?? "";
 
             if (_typeSymbol is IFieldSymbol fs)
             {
-                Type = fs.Type.ToString();
+                // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nenter try block");
+                try
+                {
 
-                var genericPart = "";
-                if (Type.Contains('<'))
-                {
-                    genericPart = Type.Substring(Type.IndexOf('<'));
-                }
+                    Type = fs.Type?.ToString();
+                    // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nassigned type");
+                    if (Type == null || Type == "")
+                    {
+                        // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nFIELD_TYPE IS NULL");
+                        throw new InvalidOperationException("Type is null");
+                    }
 
+                    // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nPast null type check");
+                    var genericPart = "";
+                    if (Type.Contains('<'))
+                    {
+                        genericPart = Type.Substring(Type.IndexOf('<'));
+                    }
+                    // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nadjusted string");
 
-                SetInnerType(fs.Type, out var nts);
-                if (nts != null
-                    && nts.TypeArguments.Length > 0
-                    && nts.TypeArguments[0].AssignableFrom("Godot.Node"))
-                {
-                    InnerIsNode = true;
-                }
+                    if (SetInnerType(fs.Type, out var nts))
+                    {
+                        // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nRan SetInnerType");
+                        if (nts != null
+                            && nts.TypeArguments != null
+                            && nts.TypeArguments.Length > 0
+                            && nts.TypeArguments[0].AssignableFrom("Godot.Node"))
+                        {
+                            InnerIsNode = true;
+                        }
+                    }
 
-                if (fs.Type.AssignableFrom("Godot.Node"))
-                {
-                    IsNode = true;
+                    // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nInner Is Node Check Done");
+                    if (fs.Type == null)
+                    {
+                        // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\n fs.Type is null.");
+                        throw new InvalidProgramException("fs.Type is null.");
+                    }
+                    else
+                    {
+                        // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "fs.Type == " + fs.Type);
+                    }
+
+                    if (fs.Type.AssignableFrom("Godot.Node"))
+                    {
+                        IsNode = true;
+                    }
+                    else if (fs.Type.AssignableFrom("GodotStrict.Types.OptionNode" + genericPart))
+                    {
+                        IsOptionNode = true;
+                    }
+                    else if (fs.Type.AssignableFrom("GodotStrict.Types.Scanner" + genericPart))
+                    {
+                        IsScanner = true;
+                    }
+                    // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nDone!\n\n");
                 }
-                else if (fs.Type.AssignableFrom("GodotStrict.Types.OptionNode" + genericPart))
+                catch (NullReferenceException n)
                 {
-                    IsOptionNode = true;
-                }
-                else if (fs.Type.AssignableFrom("GodotStrict.Types.Scanner" + genericPart))
-                {
-                    IsScanner = true;
+                    var stackTrace = new StackTrace(n, true);
+                    var frame = stackTrace?.GetFrame(0);
+                    var line = frame?.GetFileLineNumber();
+
+                    // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nFIELD" + n.StackTrace + '\n' + (line ?? -999));
+
+                    throw new InvalidOperationException("something happened in field");
                 }
             }
             else if (_typeSymbol is IPropertySymbol ps)
             {
-                Type = ps.Type.ToString();
-                var genericPart = "";
-                if (Type.Contains('<'))
+                try
                 {
-                    genericPart = Type.Substring(Type.IndexOf('<'));
-                }
+                    Type = ps.Type.ToString();
+                    var genericPart = "";
+                    if (Type.Contains('<'))
+                    {
+                        genericPart = Type.Substring(Type.IndexOf('<'));
+                    }
 
-                SetInnerType(ps.Type, out var nts);
-                if (nts != null
-                    && nts.TypeArguments.Length > 0
-                    && nts.TypeArguments[0].AssignableFrom("Godot.Node"))
-                {
-                    InnerIsNode = true;
-                }
+                    if (SetInnerType(ps.Type, out var nts))
+                    {
+                        if (nts != null
+                            && nts.TypeArguments.Length > 0
+                            && nts.TypeArguments[0].AssignableFrom("Godot.Node"))
+                        {
+                            InnerIsNode = true;
+                        }
+                    }
 
 
-                if (ps.Type.AssignableFrom("Godot.Node"))
-                {
-                    IsNode = true;
+                    if (ps.Type.AssignableFrom("Godot.Node"))
+                    {
+                        IsNode = true;
+                    }
+                    else if (ps.Type.AssignableFrom("GodotStrict.Types.OptionNode" + genericPart))
+                    {
+                        IsOptionNode = true;
+                    }
+                    else if (ps.Type.AssignableFrom("GodotStrict.Types.Scanner" + genericPart))
+                    {
+                        IsScanner = true;
+                    }
                 }
-                else if (ps.Type.AssignableFrom("GodotStrict.Types.OptionNode" + genericPart))
+                catch (NullReferenceException n)
                 {
-                    IsOptionNode = true;
-                }
-                else if (ps.Type.AssignableFrom("GodotStrict.Types.Scanner" + genericPart))
-                {
-                    IsScanner = true;
+
+                    // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nPROPERTY" + n.StackTrace);
+
+                    throw new InvalidOperationException("something happened in property");
                 }
             }
         }
 
         public string InheritanceChain()
         {
-            string result = "";
-            if (isymbol is IFieldSymbol fs)
+            try
             {
-                var baseType = fs.Type.BaseType;
-                while (baseType != null)
+
+                string result = "";
+                if (isymbol is IFieldSymbol fs)
                 {
-                    result += ", " + baseType.Name;
-                    baseType = baseType.BaseType;
+                    var baseType = fs.Type.BaseType;
+                    while (baseType != null)
+                    {
+                        result += ", " + baseType.Name;
+                        baseType = baseType.BaseType;
+                    }
                 }
+                if (isymbol is IPropertySymbol ps)
+                {
+                    var baseType = ps.Type.BaseType;
+                    while (baseType != null)
+                    {
+                        result += ", " + baseType.Name;
+                        baseType = baseType.BaseType;
+                    }
+                }
+                return result;
             }
-            if (isymbol is IPropertySymbol ps)
+            catch (NullReferenceException n)
             {
-                var baseType = ps.Type.BaseType;
-                while (baseType != null)
-                {
-                    result += ", " + baseType.Name;
-                    baseType = baseType.BaseType;
-                }
+                // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", n.StackTrace + "INH CHAIN");
+                throw new InvalidOperationException("something happened in inheritance chain");
+                throw n;
             }
-            return result;
         }
 
 
@@ -124,18 +186,27 @@ namespace GodotUtilities.SourceGenerators.Scene
         {
         }
 
-        private void SetInnerType(ITypeSymbol typeSymbol, out INamedTypeSymbol _nts)
+        private bool SetInnerType(ITypeSymbol typeSymbol, out INamedTypeSymbol _nts)
         {
-            _nts = null;
-            if (typeSymbol is INamedTypeSymbol nts)
+            try
             {
-                _nts = nts;
-                if (nts.IsGenericType && nts.TypeArguments.Length > 0)
+                _nts = null;
+                if (typeSymbol is INamedTypeSymbol nts)
                 {
                     _nts = nts;
-                    InnerType = nts.TypeArguments[0].ToString();
-                    return;
+                    if (nts.IsGenericType && nts.TypeArguments.Length > 0)
+                    {
+                        _nts = nts;
+                        InnerType = nts.TypeArguments[0].ToString();
+                        return true;
+                    }
                 }
+                return false;
+            }
+            catch (NullReferenceException n)
+            {
+                // File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", n.StackTrace);
+                throw n;
             }
         }
     }
