@@ -31,14 +31,12 @@ namespace GodotUtilities.SourceGenerators.Scene
 
                 var model = new UseDiDataModel(symbol) { LocalNodes = localModels };
                 var output = SceneTreeTemplate.Render(model, member => member.Name);
-#if DEBUG
                 var fileOutput = output;
                 foreach (var m in localModels)
                 {
-                    fileOutput += "\n" + $"type: {m.Type} | inner type: {m.InnerType} | inner type is node: {m.InnerIsNode} | is node: {m.IsNode} | is option: {m.IsOptionNode} | is scanner: {m.IsScanner}";
+                    fileOutput += "\n" + $"nodepath: {m.Path} | type: {m.Type} | inner type: {m.InnerType} | inner type is node: {m.InnerIsNode} | is node: {m.IsNode} | is option: {m.IsOptionNode} | is scanner: {m.IsScanner}";
                     fileOutput += "\n\t i-chain: " + m.InheritanceChain();
                 }
-#endif
                 return (output, null);
             }
             catch (NullReferenceException n)

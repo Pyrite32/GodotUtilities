@@ -7,7 +7,10 @@
 
         public DiTargetAttribute(string nodePath = null)
         {
-            NodePath = nodePath;
+            if (nodePath != null)
+            {
+                NodePath = '"' + nodePath + '"';
+            }
         }
     }
 }

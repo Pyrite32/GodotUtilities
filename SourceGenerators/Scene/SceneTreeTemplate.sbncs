@@ -1,19 +1,19 @@
 ﻿{{- func render_assignment_noinner(node) ~}}
     {{NSIndent}}{{NSIndent}}{{NSIndent}}
     {{NSIndent}}{{~ if node.IsNode ~}} 
-    {{NSIndent}}{{node.MemberName}} = this.Require<{{node.Type}}>({{~ if node.Path == "" ~}}"{{node.Path}}"{{~ end ~}});
+    {{NSIndent}}{{node.MemberName}} = this.Require<{{node.Type}}>({{node.Path}});
     {{NSIndent}}{{~ else ~}}
-    {{NSIndent}}{{node.MemberName}} = this.RequireContract<{{node.Type}}>({{~ if node.Path == "" ~}}"{{node.Path}}"{{~ end ~}});
+    {{NSIndent}}{{node.MemberName}} = this.RequireContract<{{node.Type}}>({{node.Path}});
     {{NSIndent}}{{~ end ~}}
 {{~ end -}}
 
 {{- func render_assignment_inner(node) ~}}
     {{NSIndent}}{{NSIndent}}{{NSIndent}}{{NSIndent}}
-    {{NSIndent}}{{NSIndent}}{{~ if node.IsOptionNode && node.InnerIsNode ~}}{{node.MemberName}} = this.Optional<{{node.InnerType}}>({{~ if node.Path == "" ~}}"{{node.Path}}"{{~ end ~}});
+    {{NSIndent}}{{NSIndent}}{{~ if node.IsOptionNode && node.InnerIsNode ~}}{{node.MemberName}} = this.Optional<{{node.InnerType}}>({{node.Path}});
     {{NSIndent}}{{NSIndent}}{{~ else if node.IsScanner ~}}
-    {{NSIndent}}{{NSIndent}}{{node.MemberName}} = this.ExpectFromGroup<{{node.InnerType}}>("{{node.Path}}");
+    {{NSIndent}}{{NSIndent}}{{node.MemberName}} = this.ExpectFromGroup<{{node.InnerType}}>({{node.Path}});
     {{NSIndent}}{{NSIndent}}{{~ else ~}}
-    {{NSIndent}}{{NSIndent}}{{node.MemberName}} = this.OptionalContract<{{node.InnerType}}>({{~ if node.Path == "" ~}}"{{node.Path}}"{{~ end ~}});
+    {{NSIndent}}{{NSIndent}}{{node.MemberName}} = this.OptionalContract<{{node.InnerType}}>({{node.Path}});
     {{NSIndent}}{{NSIndent}}{{~ end ~}}
 {{~ end -}}
 
