@@ -15,7 +15,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <PropertyGroup>
-    <Authors>Firebelley</Authors>
+    <Authors>Firebelley+Tetrachroma</Authors>
     <Description>
       Source generators to accompany Firebelley.GodotUtilities.
     </Description>

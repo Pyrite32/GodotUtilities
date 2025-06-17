@@ -2,11 +2,11 @@
 
 namespace GodotUtilities.SourceGenerators.Scene
 {
-    internal class UseDiDataModel : ClassDataModel
+    internal class UseAutowiringAttributeDataModel : ClassDataModel
     {
         public List<DiTargetAttributeDataModel> LocalNodes { get; set; }
 
-        public UseDiDataModel(INamedTypeSymbol symbol) : base(symbol)
+        public UseAutowiringAttributeDataModel(INamedTypeSymbol symbol) : base(symbol)
         { }
     }
 }
