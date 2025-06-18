@@ -39,7 +39,7 @@ namespace GodotUtilities.SourceGenerators.Scene
                 // }
                 return (output, null);
             }
-            catch (NullReferenceException n)
+            catch (NullReferenceException)
             {
                 //File.WriteAllText("C:\\Users\\patri\\Programming\\output-template.csx", n.ToString() + n.Message + n.StackTrace);
                 throw;
@@ -66,7 +66,7 @@ namespace GodotUtilities.SourceGenerators.Scene
                 result.AddRange(members);
                 return result;
             }
-            catch (NullReferenceException n)
+            catch (NullReferenceException)
             {
                 //File.WriteAllText("C:\\Users\\patri\\Programming\\output-template.csx", n.ToString() + n.Message + n.StackTrace);
                 throw;

@@ -14,12 +14,13 @@ namespace GodotUtilities.SourceGenerators.Scene
         public bool IsNode { get; }
         public bool IsScanner { get; }
         public bool LookAtSibling { get; }
+        public bool IsOptionManyNode { get; }
         internal ISymbol isymbol;
 
 
         protected DiTargetAttributeDataModel(ISymbol _typeSymbol, string nodePath, bool isSibling) : base(_typeSymbol)
         {
-            //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nenter");
+            ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nenter");
             isymbol = _typeSymbol;
 
             LookAtSibling = isSibling;
@@ -34,29 +35,29 @@ namespace GodotUtilities.SourceGenerators.Scene
 
             if (_typeSymbol is IFieldSymbol fs)
             {
-                //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nenter try block");
+                ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nenter try block");
                 try
                 {
 
                     Type = fs.Type?.ToString();
-                    //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nassigned type");
+                    ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nassigned type");
                     if (Type == null || Type == "")
                     {
-                        //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nFIELD_TYPE IS NULL");
+                        ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nFIELD_TYPE IS NULL");
                         throw new InvalidOperationException("Type is null");
                     }
 
-                    //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nPast null type check");
+                    ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nPast null type check");
                     var textGenericIdentifier = "";
                     if (Type.Contains('<'))
                     {
                         textGenericIdentifier = Type.Substring(Type.IndexOf('<'));
                     }
-                    //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nadjusted string");
+                    ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nadjusted string");
 
                     if (SetInnerType(fs.Type, out var nts))
                     {
-                        //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nRan SetInnerType");
+                        ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nRan SetInnerType");
                         if (nts != null
                             && nts.TypeArguments != null
                             && nts.TypeArguments.Length > 0
@@ -66,15 +67,15 @@ namespace GodotUtilities.SourceGenerators.Scene
                         }
                     }
 
-                    //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nInner Is Node Check Done");
+                    ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nInner Is Node Check Done");
                     if (fs.Type == null)
                     {
-                        //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\n fs.Type is null.");
+                        ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\n fs.Type is null.");
                         throw new InvalidProgramException("fs.Type is null.");
                     }
                     else
                     {
-                        //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "fs.Type == " + fs.Type);
+                        ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "fs.Type == " + fs.Type);
                     }
 
                     if (fs.Type.AssignableFrom("Godot.Node"))
@@ -85,11 +86,17 @@ namespace GodotUtilities.SourceGenerators.Scene
                     {
                         IsOptionNode = true;
                     }
+                    else if (fs.Type.AssignableFrom("GodotStrict.Types.OptionCollection" + textGenericIdentifier) ||
+                            (fs.Type + textGenericIdentifier).Equals("GodotStrict.Types.OptionCollection" + textGenericIdentifier))
+                    {
+                        IsOptionManyNode = true;
+                    }
                     else if (fs.Type.AssignableFrom("GodotStrict.Types.Scanner" + textGenericIdentifier))
                     {
                         IsScanner = true;
                     }
-                    //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nDone!\n\n");
+                     //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nType: " + fs.Type + "being assignable from: " + "GodotStrict.Types.OptionCollection" + textGenericIdentifier + "is: " + IsOptionManyNode + "\n");
+                    ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nDone!\n\n");
                 }
                 catch (NullReferenceException n)
                 {
@@ -97,7 +104,7 @@ namespace GodotUtilities.SourceGenerators.Scene
                     var frame = stackTrace?.GetFrame(0);
                     var line = frame?.GetFileLineNumber();
 
-                    //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nFIELD" + n.StackTrace + '\n' + (line ?? -999));
+                    ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nFIELD" + n.StackTrace + '\n' + (line ?? -999));
 
                     throw new InvalidOperationException("An error occurred when checking field");
                 }
@@ -107,10 +114,10 @@ namespace GodotUtilities.SourceGenerators.Scene
                 try
                 {
                     Type = ps.Type.ToString();
-                    var genericPart = "";
+                    var textGenericIdentifier = "";
                     if (Type.Contains('<'))
                     {
-                        genericPart = Type.Substring(Type.IndexOf('<'));
+                        textGenericIdentifier = Type.Substring(Type.IndexOf('<'));
                     }
 
                     if (SetInnerType(ps.Type, out var nts))
@@ -128,19 +135,25 @@ namespace GodotUtilities.SourceGenerators.Scene
                     {
                         IsNode = true;
                     }
-                    else if (ps.Type.AssignableFrom("GodotStrict.Types.Option" + genericPart))
+                    else if (ps.Type.AssignableFrom("GodotStrict.Types.Option" + textGenericIdentifier))
                     {
                         IsOptionNode = true;
                     }
-                    else if (ps.Type.AssignableFrom("GodotStrict.Types.Scanner" + genericPart))
+                    else if (ps.Type.AssignableFrom("GodotStrict.Types.OptionCollection" + textGenericIdentifier) ||
+                            (ps.Type + textGenericIdentifier).Equals("GodotStrict.Types.OptionCollection" + textGenericIdentifier))
+                    {
+                        IsOptionManyNode = true;
+                    }
+                    else if (ps.Type.AssignableFrom("GodotStrict.Types.Scanner" + textGenericIdentifier))
                     {
                         IsScanner = true;
                     }
+                    //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nType: " + ps.Type + "being assignable from: " + "GodotStrict.Types.OptionCollection" + textGenericIdentifier + "is: " + IsOptionManyNode + "\n");
                 }
                 catch (NullReferenceException n)
                 {
 
-                    //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nPROPERTY" + n.StackTrace);
+                    ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", "\nPROPERTY" + n.StackTrace);
 
                     throw new InvalidOperationException("An error occurred when checking property: " + n.Message);
                 }
@@ -175,7 +188,7 @@ namespace GodotUtilities.SourceGenerators.Scene
             }
             catch (NullReferenceException n)
             {
-                //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", n.StackTrace + "INH CHAIN");
+                ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", n.StackTrace + "INH CHAIN");
                 throw new InvalidOperationException("An error occurred when resolving the inheritance chain");
                 throw n;
             }
@@ -209,7 +222,7 @@ namespace GodotUtilities.SourceGenerators.Scene
             }
             catch (NullReferenceException n)
             {
-                //File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", n.Message);
+                ////File.AppendAllText("C:\\Users\\patri\\Programming\\output-template.csx", n.Message);
                 throw n;
             }
         }

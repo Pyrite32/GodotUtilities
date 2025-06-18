@@ -1,25 +1,45 @@
 ﻿{{- func render_assignment_noinner(node) ~}}
-    {{NSIndent}}{{NSIndent}}{{NSIndent}}
-    {{NSIndent}}{{NSIndent}}{{~ if node.LookAtSibling ~}}
-    {{NSIndent}}{{NSIndent}}{{node.MemberName}} = this.RequireSibling<{{node.Type}}>({{node.Path}});
-    {{NSIndent}}{{NSIndent}}{{~ else ~}}
-    {{NSIndent}}{{NSIndent}}{{node.MemberName}} = this.Require<{{node.Type}}>({{node.Path}});
-    {{NSIndent}}{{NSIndent}}{{~ end ~}}
+    
+    {{~ if node.LookAtSibling ~}}
+    {{~ if node.IsOptionManyNode ~}}
+        {{node.MemberName}} = this.OptionalSiblings<{{node.InnerType}}>({{node.Path}});
+        {{~ else ~}}
+        {{node.MemberName}} = this.RequireSibling<{{node.Type}}>({{node.Path}});
+        {{~ end ~}}
+    {{~ else ~}}
+    {{~ if node.IsOptionManyNode ~}}
+        {{node.MemberName}} = this.OptionalMany<{{node.InnerType}}>({{node.Path}});
+        {{~ else ~}}
+        {{node.MemberName}} = this.Require<{{node.Type}}>({{node.Path}});
+        {{~ end ~}}
+    {{~ end ~}}
 {{~ end -}}
 
 {{- func render_assignment_inner(node) ~}}
-    {{NSIndent}}{{NSIndent}}{{NSIndent}}{{NSIndent}}
-    {{NSIndent}}{{NSIndent}}{{~ if node.IsOptionNode && node.InnerIsNode ~}}
-    {{~ if node.LookAtSibling ~}}
-    {{NSIndent}}{{NSIndent}}{{node.MemberName}} = this.OptionalSibling<{{node.InnerType}}>({{node.Path}});
+    
+    {{~ if node.IsOptionNode && node.InnerIsNode ~}}
+        {{~ if node.LookAtSibling ~}}
+            {{~ if node.IsOptionManyNode ~}}
+            {{node.MemberName}} = this.OptionalSiblings<{{node.InnerType}}>({{node.Path}});
+            {{~ else ~}}
+            {{node.MemberName}} = this.OptionalSibling<{{node.InnerType}}>({{node.Path}});
+            {{~ end ~}}
+
+        {{~ else ~}}
+    {{~ end ~}}
+    {{~ else if node.IsScanner ~}}
+    {{node.MemberName}} = ExpectFromGroup<{{node.InnerType}}>({{node.Path}});
     {{~ else ~}}
-    {{NSIndent}}{{NSIndent}}{{node.MemberName}} = this.Optional<{{node.InnerType}}>({{node.Path}});
-    {{NSIndent}}{{NSIndent}}{{~ end ~}}
-    {{NSIndent}}{{NSIndent}}{{~ else if node.IsScanner ~}}
-    {{NSIndent}}{{NSIndent}}{{NSIndent}}{{node.MemberName}} = ExpectFromGroup<{{node.InnerType}}>({{node.Path}});
-    {{NSIndent}}{{NSIndent}}{{~ else ~}}
-    {{NSIndent}}{{NSIndent}}{{NSIndent}}{{node.MemberName}} = this.Require<{{node.Type}}>({{node.Path}});
-    {{NSIndent}}{{NSIndent}}{{~ end ~}}
+    {{~ if node.IsOptionManyNode ~}}
+        {{node.MemberName}} = this.OptionalMany<{{node.InnerType}}>({{node.Path}});
+    {{~ else ~}}
+        {{~ if node.IsOptionNode ~}}
+            {{node.MemberName}} = this.Optional<{{node.InnerType}}>({{node.Path}});
+        {{~ else ~}}
+            {{node.MemberName}} = this.Require<{{node.Type}}>({{node.Path}});
+        {{~ end ~}}
+    {{~ end ~}}
+    {{~ end ~}}
 {{~ end -}}
 
 using System;
@@ -30,19 +50,17 @@ using GodotStrict.Types;
 using static GodotStrict.Helpers.Dependency.DependencyHelper;
 
 {{~NSOpen~}}
-{{NSIndent}}partial class {{ClassName}}
-{{NSIndent}}{
-{{NSIndent}}    void 依赖注入()
-{{NSIndent}}    {
-{{NSIndent}}{{~
-for node in LocalNodes
+partial class {{ClassName}}
+{
+    void 依赖注入()
+    {
+{{~ for node in LocalNodes
     if !node.InnerType
         render_assignment_noinner node
     else
         render_assignment_inner node
     end
-end
-~}}
-{{NSIndent}}    }
-{{NSIndent}}}
+end ~}}
+    }
+}
 {{~NSClose~}}
